@@ -51,6 +51,20 @@ const Index = () => {
     setAnswers((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleSliderChange = (id: string, value: number) => {
+    setAnswers((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleDeviceToggle = (id: string, device: string) => {
+    setAnswers((prev) => {
+      const current = Array.isArray(prev[id]) ? prev[id] : [];
+      const updated = (current as string[]).includes(device)
+        ? (current as string[]).filter((d) => d !== device)
+        : [...(current as string[]), device];
+      return { ...prev, [id]: updated };
+    });
+  };
+
   const resetChecklist = () => {
     setAnswers({});
     setShowResults(false);
@@ -97,9 +111,13 @@ const Index = () => {
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const incompleteItems = CHECKLIST_ITEMS.filter(
-    (item) => answers[item.id] !== true
-  );
+  const incompleteItems = CHECKLIST_ITEMS.filter((item) => {
+    const answer = answers[item.id];
+    if (item.inputType === "toggle") return answer !== true;
+    if (item.inputType === "slider") return typeof answer !== "number" || answer < 70;
+    if (item.inputType === "devices") return !Array.isArray(answer) || answer.length < 3;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-background antialiased">
@@ -138,13 +156,15 @@ const Index = () => {
 
           <div className="mt-10 grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <ul className="space-y-4">
+              <ul className="space-y-5">
                 {CHECKLIST_ITEMS.map((item) => (
                   <ChecklistQuestion
                     key={item.id}
                     item={item}
-                    isChecked={answers[item.id] === true}
+                    isChecked={answers[item.id] ?? (item.inputType === "devices" ? [] : item.inputType === "slider" ? 0 : false)}
                     onToggle={() => toggleAnswer(item.id)}
+                    onSliderChange={(value) => handleSliderChange(item.id, value)}
+                    onDeviceToggle={(device) => handleDeviceToggle(item.id, device)}
                   />
                 ))}
               </ul>

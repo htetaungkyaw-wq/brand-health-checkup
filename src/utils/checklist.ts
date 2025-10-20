@@ -3,11 +3,17 @@ import { CHECKLIST_ITEMS } from "@/data/checklist";
 
 export function calculateScore(answers: ChecklistAnswers): number {
   const totalWeight = CHECKLIST_ITEMS.reduce((sum, item) => sum + item.weight, 0);
-  const yesWeight = CHECKLIST_ITEMS.reduce(
-    (sum, item) => sum + (answers[item.id] === true ? item.weight : 0),
-    0
-  );
-  return Math.round((yesWeight / totalWeight) * 100);
+  const achievedWeight = CHECKLIST_ITEMS.reduce((sum, item) => {
+    const answer = answers[item.id];
+    const item_score = 
+      typeof answer === 'boolean' ? (answer ? item.weight : 0) :
+      typeof answer === 'number' ? (answer / 100) * item.weight :
+      Array.isArray(answer) ? (answer.length > 0 ? item.weight : 0) :
+      0;
+    return sum + item_score;
+  }, 0);
+  
+  return Math.round((achievedWeight / totalWeight) * 100);
 }
 
 export function estimateUplift(scorePercent: number): number {
